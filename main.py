@@ -85,7 +85,7 @@ class PDFKeywordAnalyzerApp:
         sidebar.pack(side=tk.LEFT, fill=tk.Y)
         sidebar.pack_propagate(False)
         
-        # Logo/标题
+        # 固定顶部：Logo/标题
         title_frame = ttk.Frame(sidebar)
         title_frame.pack(fill=tk.X, padx=15, pady=15)
         
@@ -101,13 +101,35 @@ class PDFKeywordAnalyzerApp:
         # 分隔线
         ttk.Separator(sidebar, orient=tk.HORIZONTAL).pack(fill=tk.X, padx=15, pady=5)
         
+        # 可滚动中间区域：输入+设置
+        canvas = tk.Canvas(sidebar, highlightthickness=0, borderwidth=0)
+        scrollbar = ttk.Scrollbar(sidebar, orient=tk.VERTICAL, command=canvas.yview)
+        self.scrollable_frame = ttk.Frame(canvas)
+        
+        self.scrollable_frame.bind(
+            "<Configure>",
+            lambda e: canvas.configure(scrollregion=canvas.bbox("all"))
+        )
+        
+        canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw", width=280)
+        canvas.configure(yscrollcommand=scrollbar.set)
+        
+        # 绑定鼠标滚轮
+        def on_mousewheel(event):
+            canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+        
+        canvas.bind_all("<MouseWheel>", on_mousewheel)
+        
+        canvas.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+        
         # === 输入区域 ===
-        self.create_input_section(sidebar)
+        self.create_input_section(self.scrollable_frame)
         
         # === 设置区域 ===
-        self.create_settings_section(sidebar)
+        self.create_settings_section(self.scrollable_frame)
         
-        # === 操作按钮 ===
+        # 固定底部：操作按钮
         self.create_action_buttons(sidebar)
     
     def create_input_section(self, parent):
