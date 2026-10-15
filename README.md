@@ -1,428 +1,56 @@
-# PDF Keyword Analyzer v2.0
+# PDF Keyword Analyzer · PDF 关键词分析工具
 
-一个带GUI界面的桌面应用程序，用于从PDF文件中精确匹配关键词，统计出现情况，导出多种格式报告。
+带 Tkinter 图形界面的 Python 工具，用于在 PDF 中查找关键词，统计出现次数、页码和上下文，并导出报告。人名名单是其中一种使用场景。A desktop PDF keyword analyzer with report export.
 
-适用于：人员名单统计、审计、法律文件分析、医疗文献、科研资料、企业资料检索。
+## 能做什么
 
----
+- 从 TXT、CSV、Excel 或 JSON 文件加载关键词。
+- 选择单个、多份 PDF，或指定目录批量分析。
+- 按精确、模糊或正则模式匹配，按需区分大小写。
+- 查看命中页码和前后文，导出 Excel、CSV、JSON 报告。
+- 对扫描型 PDF 使用可选 OCR 模块；OCR 需要额外依赖。
 
-## 功能特点
+项目保留多个解析器和测试脚本，正常 GUI 入口为 `main.py`。当前仓库提供源码，没有正式的二进制 Release 下载。
 
-### 核心功能
+## 安装与运行
 
-- **多格式关键词库**: 支持 TXT、CSV、Excel、JSON 格式，自动识别
-- **多PDF输入**: 支持单个PDF、多个PDF、整个文件夹
-- **三种匹配模式**: 精确匹配、模糊匹配、正则表达式
-- **多格式导出**: Excel、CSV、JSON，可同时导出多种格式
-- **上下文导出**: 显示关键词前后N字符上下文，支持双击查看详情
+安装包含 Tkinter 的 Python 3，然后执行：
 
-### 高级功能
-
-- **OCR支持**: 可识别扫描版PDF（需安装额外依赖）
-- **文本缓存**: 自动缓存已解析的PDF，加速重复解析
-- **配置管理**: 自动保存窗口位置、最近目录、匹配设置等
-- **统计信息**: PDF数量、总页数、匹配次数、耗时、性能统计
-- **多线程设计**: 后台处理耗时任务，GUI不会卡死
-
----
-
-## 安装要求
-
-- Python 3.8+
-- 核心依赖：
-  - pdfplumber>=0.10.0
-  - openpyxl>=3.1.0
-
-### 可选依赖（OCR功能）
-
-```bash
-pip install pytesseract pillow pdf2image
+```powershell
+git clone https://github.com/gura8390/PDFREADER.git
+cd PDFREADER
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe main.py
 ```
 
-还需要安装 Tesseract OCR 引擎（详见 `ocr_module.py` 说明）。
+`requirements.txt` 中的核心依赖是 `pdfplumber` 和 `openpyxl`。其他系统也可使用虚拟环境中的 Python 运行 `main.py`，跨平台 GUI 兼容性需要另行核验。
 
----
+## 基本操作
 
-## 安装步骤
+1. 选择关键词库和待分析的 PDF 文件或目录。
+2. 设置匹配模式、上下文范围和导出格式。
+3. 选择输出位置并开始分析。
+4. 查看结果，再打开导出的报告进行核对。
 
-```bash
-# 克隆项目
-git clone <repository-url>
-cd pdf-name-matcher/2.0
+## 扫描件与 OCR
 
-# 安装依赖
-pip install -r requirements.txt
+扫描件可能没有可直接提取的文本层。按需安装 `pytesseract`、`Pillow`、`pdf2image`，并配置系统中的 Tesseract 和 Poppler；这些组件不包含在核心依赖安装中。OCR 识别结果和统计结果需要人工核对。
 
-# 启动程序
-python main.py
-```
+## 文件说明
 
----
+| 文件 | 用途 |
+|---|---|
+| `main.py` | GUI 启动入口 |
+| `keyword_loader.py` | 关键词库读取 |
+| `pdf_parser.py`、`pdf_parser_v2.py` | PDF 解析模块 |
+| `match_engine.py`、`name_matcher.py` | 匹配相关实现 |
+| `context_extractor.py` | 命中上下文 |
+| `exporter.py`、`excel_exporter.py` | 结果导出 |
+| `integration_test.py`、`stress_test.py`、`benchmark*.py` | 开发检查脚本，使用前查看所需输入 |
 
-## 使用方法
-
-### 1. 准备关键词库
-
-支持多种格式，程序自动识别：
-
-**TXT格式（逗号/换行/分号分隔）：**
-```
-张三,李四,王五
-赵六
-孙七;周八
-```
-
-**CSV格式：**
-```csv
-张三
-李四
-王五
-```
-
-**Excel格式：**
-直接使用 `.xlsx` 文件，程序会读取所有单元格内容。
-
-**JSON格式：**
-```json
-["张三", "李四", "王五"]
-```
-或
-```json
-{"keywords": ["张三", "李四", "王五"]}
-```
-
-### 2. 选择PDF文件
-
-- **单个文件**: 选择一个PDF文件
-- **多个文件**: 选择多个PDF文件（按住Ctrl多选）
-- **整个目录**: 选择一个文件夹，自动扫描所有PDF
-
-### 3. 设置匹配选项
-
-| 选项 | 说明 |
-|------|------|
-| 匹配模式 | exact=精确, fuzzy=模糊, regex=正则 |
-| 区分大小写 | 英文关键词是否区分大小写 |
-| 上下文长度 | 关键词前后显示的字符数（10-200） |
-| 导出格式 | Excel/CSV/JSON，可多选 |
-| 包含上下文 | 是否在导出中包含上下文 |
-| 使用缓存 | 是否缓存PDF解析结果 |
-| OCR设置 | 是否启用OCR识别扫描PDF |
-
-### 4. 开始分析
-
-点击"开始分析"按钮，程序会：
-1. 加载关键词库
-2. 收集PDF文件
-3. 逐页解析PDF
-4. 匹配关键词
-5. 导出结果
-
----
-
-## GUI界面
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│ PDF Keyword Analyzer v2.0                                     │
-├──────────────┬───────────────────────────────────────────────┤
-│              │ 输入                                          │
-│ 关键词库     │ [关键词库路径] [浏览]                          │
-│ [路径] [浏览]│ [PDF路径]    [浏览]                           │
-│              │ [输出路径]    [浏览]                           │
-│ PDF文件      │                                               │
-│ ○单个 ○多个 ○│ 设置                                          │
-│ [路径] [浏览]│ 匹配模式: [exact ▼]                           │
-│              │ ☑ 区分大小写                                  │
-│ 输出路径     │ 上下文长度: [30]                               │
-│ [路径] [浏览]│ 导出: ☑Excel ☐CSV ☐JSON                      │
-│              │ ☑ 包含上下文                                  │
-│ 匹配设置     │ ☑ 使用缓存  [清除缓存]                        │
-│ 模式: exact  │ OCR设置:                                      │
-│ ☑ 区分大小写 │ ☐ 启用OCR  ☑ 自动检测                        │
-│ 上下文: 30   │ 语言: [chi_sim+eng ▼]                        │
-│ 导出: ☑Excel │                                               │
-│ ☑ 使用缓存   │───────────────────────────────────────────────│
-│ OCR: ☐启用   │ [进度条: ████████░░░░ 65%]                    │
-│              │───────────────────────────────────────────────│
-│ [开始分析]   │ [结果预览] [统计信息] [日志]                   │
-│ [停止]       │ ┌──────┬──────┬──────┬──────┬──────┬──────┐  │
-│              │ │关键词│次数  │页码  │首次  │最后  │PDF数 │  │
-│              │ ├──────┼──────┼──────┼──────┼──────┼──────┤  │
-│              │ │张三  │15    │1,5,23│1     │67    │2     │  │
-│              │ │李四  │8     │12,34 │12    │56    │1     │  │
-│              │ └──────┴──────┴──────┴──────┴──────┴──────┘  │
-└──────────────┴───────────────────────────────────────────────┘
-```
-
----
-
-## 输出结果
-
-### Excel工作表
-
-#### 1. 关键词匹配结果
-
-| 关键词 | 出现次数 | 出现页码 | 首次出现 | 最后出现 | PDF数量 | PDF文件 |
-|--------|----------|----------|----------|----------|---------|---------|
-| 张三 | 15 | 1, 5, 23, 45, 67 | 1 | 67 | 2 | report.pdf, ... |
-| 李四 | 8 | 12, 34, 56 | 12 | 56 | 1 | report.pdf |
-
-#### 2. 上下文详情
-
-| 关键词 | PDF文件 | 页码 | 上下文 |
-|--------|---------|------|--------|
-| 张三 | report.pdf | 23 | ...张三负责本项目... |
-| 张三 | report.pdf | 45 | ...由张三审核... |
-
-#### 3. 统计信息
-
-- PDF数量、总页数
-- 关键词总数、匹配数、未匹配数
-- 总命中次数、平均命中
-- 处理耗时、处理速度
-- 命中最多的关键词
-- 未匹配的关键词列表
-
-### CSV导出
-
-- `关键词匹配结果.csv`
-- `上下文详情.csv`（如勾选包含上下文）
-
-### JSON导出
-
-包含所有数据的结构化JSON文件。
-
----
-
-## 文件结构
-
-```
-2.0/
-├── main.py                # 主程序（GUI界面）
-├── config.py              # 配置管理（config.json）
-├── keyword_loader.py      # 关键词库加载（TXT/CSV/Excel/JSON）
-├── pdf_parser_v2.py       # PDF解析（单个/多个/文件夹）
-├── match_engine.py        # 匹配引擎（精确/模糊/正则）
-├── context_extractor.py   # 上下文提取
-├── stats.py               # 统计模块
-├── exporter.py            # 多格式导出（Excel/CSV/JSON）
-├── ocr_module.py          # OCR模块（可选）
-├── cache_manager.py       # 缓存管理
-├── worker.py              # 任务调度（多线程）
-├── utils.py               # 工具函数
-├── requirements.txt       # 依赖清单
-├── benchmark_v2.py        # 基准测试
-├── stress_test.py         # 压力测试
-├── integration_test.py    # 集成测试
-├── 导出/                  # 打包输出
-│   ├── PDFKeywordAnalyzer.exe
-│   ├── README.md
-│   └── build_appimage.sh
-└── cache/                 # 缓存目录（自动生成）
-```
-
----
-
-## 匹配模式说明
-
-### 精确匹配 (exact)
-
-完全匹配关键词，不会匹配子串。
-
-```
-关键词: 张三
-文本: "张三丰来了" → 不匹配
-文本: "张三来了" → 匹配
-```
-
-### 模糊匹配 (uzzy)
-
-忽略关键词中的空格、连字符等分隔符。
-
-```
-关键词: 张三
-文本: "张 三来了" → 匹配
-文本: "张-三来了" → 匹配
-文本: "张•三来了" → 匹配
-```
-
-### 正则表达式 (regex)
-
-关键词作为正则表达式进行匹配。
-
-```
-关键词: 张.{1}三
-文本: "张大三来了" → 匹配
-文本: "张三来了" → 不匹配
-```
-
----
-
-## OCR功能
-
-### 支持的PDF类型
-
-- **文字PDF**: 直接提取文字，无需OCR
-- **扫描PDF**: 需要OCR识别图片中的文字
-
-### 安装OCR依赖
-
-```bash
-# Python依赖
-pip install pytesseract pillow pdf2image
-
-# Tesseract OCR引擎（Windows）
-# 下载: https://github.com/UB-Mannheim/tesseract/wiki
-# 安装时选择中文语言包
-
-# Poppler（pdf2image依赖）
-# 下载: https://github.com/osber/poppler-windows/releases
-# 解压后将bin目录添加到PATH
-```
-
-### 使用方式
-
-1. 勾选"启用OCR"
-2. 选择OCR语言（默认：chi_sim+eng）
-3. 程序会自动检测哪些页面需要OCR
-
----
-
-## 配置文件
-
-程序会自动保存配置到 `config.json`：
-
-```json
-{
-  "window": {
-    "width": 1200,
-    "height": 800
-  },
-  "recent": {
-    "keyword_dir": "",
-    "pdf_dir": "",
-    "output_dir": ""
-  },
-  "match": {
-    "mode": "exact",
-    "case_sensitive": true,
-    "context_length": 30
-  },
-  "cache": {
-    "enabled": true,
-    "max_age_days": 30,
-    "max_size_mb": 500
-  }
-}
-```
-
----
-
-## 常见问题
-
-### Q: 为什么某些关键词没有匹配到？
-
-A: 可能的原因：
-1. 关键词在扫描PDF中，需要启用OCR
-2. 匹配模式不正确（如用精确匹配但关键词有变体）
-3. 关键词库格式问题
-
-### Q: 如何处理扫描版PDF？
-
-A: 勾选"启用OCR"选项，并安装OCR依赖。
-
-### Q: 缓存文件在哪里？
-
-A: 在程序目录下的 `cache/` 文件夹中。
-
-### Q: 如何清除缓存？
-
-A: 点击设置区域的"清除缓存"按钮。
-
-### Q: 支持哪些语言的OCR？
-
-A: 支持Tesseract引擎的所有语言，常用：
-- `chi_sim`: 简体中文
-- `chi_tra`: 繁体中文
-- `eng`: 英文
-- `jpn`: 日文
-- `kor`: 韩文
-
----
-
-## 打包为可执行文件
-
-### Windows EXE
-
-```bash
-pip install pyinstaller
-pyinstaller --onefile --windowed --name "PDFKeywordAnalyzer" main.py
-```
-
-输出: `dist/PDFKeywordAnalyzer.exe`
-
-### Linux AppImage
-
-```bash
-bash 导出/build_appimage.sh
-```
-
-输出: `dist/PDFKeywordAnalyzer-x86_64.AppImage`
-
----
-
-## 测试
-
-```bash
-# 运行基准测试
-python benchmark_v2.py
-
-# 运行压力测试
-python stress_test.py
-
-# 运行集成测试
-python integration_test.py
-```
-
----
+Python 字节码和缓存目录不提交版本库。配置、缓存、虚拟环境和实际处理的文件应保留在本地，不要将含有个人资料的输入文件放入公开提交。
 
 ## 许可证
 
-MIT License
-
----
-
-## 更新日志
-
-### v2.0.0 (2026-07-03)
-
-**新增功能：**
-- 支持多格式关键词库（TXT/CSV/Excel/JSON）
-- 支持多PDF输入（单个/多个/文件夹）
-- 支持三种匹配模式（精确/模糊/正则）
-- 支持多格式导出（Excel/CSV/JSON）
-- 支持上下文导出和双击查看详情
-- 支持OCR识别扫描PDF
-- 支持配置文件自动保存
-- 支持缓存管理和清理
-- 全新GUI界面（左侧功能区+右侧结果区）
-- 统计信息增强（首次/最后出现、PDF数量、性能统计）
-
-**修复：**
-- 修复表格内容重复提取导致命中次数翻倍的问题
-- 修复正则匹配模式下的变量名冲突
-
-**优化：**
-- 优化PDF解析逻辑，避免重复提取
-- 优化匹配引擎，支持不区分大小写时返回原始大小写
-- 优化统计模块，提供更详细的分析信息
-
-### v1.0.0 (2026-07-03)
-
-- 初始版本发布
-- 支持PDF文本提取和表格识别
-- 支持正则表达式精确匹配
-- 支持Excel导出和排序
-- 支持文本缓存机制
-- 支持多线程GUI界面
+[MIT License](LICENSE)。

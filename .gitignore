@@ -1,0 +1,6 @@
+# Repository hygiene: generated and machine-local files.
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
